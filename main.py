@@ -28,6 +28,10 @@ async def on_message(msg: discord.Message):
         await command_score(msg, command_args)
 
 
+def format_user(username, score, placement):
+    return f"#{placement} {username}: {score} poeng"
+
+
 async def command_ping(msg: discord.Message, _):
     await msg.channel.send("Pong!")
 
@@ -39,15 +43,31 @@ async def command_score(msg: discord.Message, args):
         scoreboard = resp.json()
 
         if len(args) == 0:
-            await msg.channel.send("\n".join([
-                f'{person["username"]}: {person["score"]} poeng' for person in scoreboard[:10]
-            ]))
+            """
+            embed = discord.Embed()
+            for i, person in enumerate(scoreboard[:5]):
+                embed.add_field(name=f'#{i + 1} {person["username"]}', value=person["score"], inline=False)
+            await msg.channel.send(embed=embed)
+
+            """
+            await msg.channel.send(embed=discord.Embed(description="\n\n".join([
+                format_user(person["username"], person["score"], i + 1) for i, person in enumerate(scoreboard[:10])
+            ])))
+
         else:
             user_search = args[0]
-            for person in scoreboard:
-                if not person["username"].startswith(user_search):
+            for i, person in enumerate(scoreboard):
+                if not person["username"].lower().startswith(user_search.lower()):
                     continue
-                await msg.channel.send(f'{person["username"]}: {person["score"]} poeng')
+
+                """
+                embed = discord.Embed()
+                embed.add_field(name=f'#{i + 1} {person["username"]}', value=person["score"], inline=False)
+                await msg.channel.send(embed=embed)
+                """
+                await msg.channel.send(embed=discord.Embed(
+                    description=format_user(person["username"], person["score"], i + 1)
+                ))
                 break
             else:
                 await msg.channel.send(f"Fant ikke den brukeren")
