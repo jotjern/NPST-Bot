@@ -104,10 +104,25 @@ async def on_message(msg: discord.Message):
 
     if command_name == "ping":
         await command_ping(msg, command_args)
+
     elif command_name == "score":
         await command_score(msg, command_args)
+
     elif command_name == "purgemail":
         await command_purgemail(msg, command_args)
+
+    elif command_name == "topp":
+        await command_topp(msg, command_args)
+
+    elif command_name == "hjelp" or command_name == "help":
+        await msg.channel.send(
+            "```" +
+            "Kommandoer:\n" +
+            "+topp\n" +
+            "+score\n" +
+            "+score [person]\n" +
+            "```"
+        )
 
 
 def format_user(username, score, placement):
@@ -138,20 +153,31 @@ async def command_purgemail(msg: discord.Message, _):
         json.dump(mail_acknowledged, fw)
 
 
-async def command_score(msg: discord.Message, args):
+async def command_topp(msg: discord.Message, _):
+    scoreboard = get_scoreboard()
+
+    best_score = max([person["score"] for person in scoreboard])
+    n_best_score = len([person for person in scoreboard if person["score"] == best_score])
+    await msg.channel.send(f"Det er {n_best_score} på scoreboardet som har {best_score} poeng")
+
+
+def get_scoreboard():
     global scoreboard_cache
 
     if scoreboard_cache is None or time.time() - scoreboard_cache["time"] > 5:
         resp = requests.get(api_endpoints["scoreboard"], headers={"apikey": config["api_key"]})
 
-        if resp.status_code != 200:
-            await msg.channel.send("Noe gikk galt!")
-            return
+        assert resp.status_code == 200
 
         scoreboard = resp.json()
         scoreboard_cache = {"scoreboard": scoreboard, "time": time.time()}
     else:
         scoreboard = scoreboard_cache["scoreboard"]
+    return scoreboard
+
+
+async def command_score(msg: discord.Message, args):
+    scoreboard = get_scoreboard()
 
     if len(args) == 0:
         await msg.channel.send(embed=discord.Embed(description="\n\n".join([
