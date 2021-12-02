@@ -1,31 +1,98 @@
 import requests
+import asyncio
 import discord
 import yaml
+import json
+import time
+import os
+import re
+
+from typing import Optional
 
 with open("config.yaml", "r", encoding="utf-8") as fr:
     config = yaml.load(fr, Loader=yaml.FullLoader)
+del fr
 
 api_endpoints = {
-    "scoreboard": "https://wiarnvnpsjysgqbwigrn.supabase.co/rest/v1/scoreboard?select=*"
+    "scoreboard": "https://wiarnvnpsjysgqbwigrn.supabase.co/rest/v1/scoreboard?select=*",
+    "snabel-a": "https://wiarnvnpsjysgqbwigrn.supabase.co/rest/v1/messages?select=id%2Crelease_at%2Csender%2Crecipient%2Ccc%2Ctopic%2Ccontent%2Crelease_after_solve%28flag%29"
 }
+
+mail_acknowledged = []
+mail_channel: Optional[discord.TextChannel] = None
 
 bot = discord.Client()
 
 
 @bot.event
 async def on_ready():
+    global mail_channel, mail_acknowledged
+
     print(f"Bot started as {bot.user}")
+
+    if not config["mail-channel"]:
+        return
+
+    if os.path.exists("mail-acknowledge.json"):
+        with open("mail-acknowledge.json", "r", encoding="utf-8") as fr:
+            mail_acknowledged = json.load(fr)
+    else:
+        mail_acknowledged = []
+
+    mail_channel = await bot.fetch_channel(config["mail-channel"])
+
+    while True:
+        print("Checking mail")
+
+        session = get_login_session()
+        resp = requests.get(api_endpoints["snabel-a"], headers={
+            "apikey": config["api_key"],
+            "authorization": f"Bearer {session['access_token']}"
+        })
+        if resp.status_code != 200:
+            print(f"Failed to check mail, error code:", resp.status_code)
+        else:
+            for mail in resp.json():
+                if mail["id"] in mail_acknowledged:
+                    continue
+
+                mail_acknowledged.append(mail["id"])
+
+                attachments = []
+                for match in re.finditer(r"\[(.*)\]\((http[s]?:\/\/.*)\)", mail["content"]):
+                    fname, url = match.groups()
+                    attachments.append(url)
+
+                await mail_channel.send(
+                    f"`Fra: {mail['sender']}`\n" +
+                    f"`Sendt: {mail['release_at']}`\n" +
+                    f"`Til: Alle`\n" +
+                    (f"`CC: {mail['cc']}`\n" if mail['cc'] else '') +
+                    f"`Emne: {mail['topic']}`\n" +
+                    "```" + mail["content"].replace("{{brukernavn}}", "hjelpere") + "```\n" +
+                    "\n".join(attachments)
+                )
+
+                with open("mail-acknowledge.json", "w", encoding="utf-8") as fw:
+                    json.dump(mail_acknowledged, fw)
+
+        await asyncio.sleep(config["mail-check-delay"])
 
 
 @bot.event
 async def on_message(msg: discord.Message):
     if not msg.content.startswith(config["prefix"]):
         return
+
     command_name, *command_args = msg.content[len(config["prefix"]):].split(" ")
+    print(command_name)
+
     if command_name == "ping":
         await command_ping(msg, command_args)
     elif command_name == "score":
         await command_score(msg, command_args)
+    elif command_name == "purgemail":
+        await command_purgemail(msg, command_args)
 
 
 def format_user(username, score, placement):
@@ -34,6 +101,26 @@ def format_user(username, score, placement):
 
 async def command_ping(msg: discord.Message, _):
     await msg.channel.send("Pong!")
+
+
+async def command_purgemail(msg: discord.Message, _):
+    global mail_acknowledged
+
+    if not msg.author.guild_permissions.administrator:
+        await msg.add_reaction("❌")
+        return
+
+    if mail_channel is None:
+        await msg.channel.send("Please wait")
+        return
+
+    print("Purging mail channel")
+
+    await mail_channel.purge(limit=100)
+
+    mail_acknowledged = []
+    with open("mail-acknowledge.json", "w", encoding="utf-8") as fw:
+        json.dump(mail_acknowledged, fw)
 
 
 async def command_score(msg: discord.Message, args):
@@ -61,6 +148,36 @@ async def command_score(msg: discord.Message, args):
                 await msg.channel.send(f"Fant ikke den brukeren")
     else:
         await msg.channel.send("Noe gikk galt!")
+
+
+def get_login_session():
+    session = None
+    if os.path.exists("session.json"):
+        with open("session.json", "r", encoding="utf-8") as fr:
+            session_data = json.load(fr)
+
+        if time.time() - session_data["session_created"] < session_data["session"]["expires_in"]:
+            session = session_data["session"]
+            print("Using existing login session")
+        else:
+            print("Login session expired!")
+
+    if session is None:
+        print("Creating new login session!")
+        resp = requests.post("https://wiarnvnpsjysgqbwigrn.supabase.co/auth/v1/token?grant_type=password", headers={
+            "apikey": config["api_key"]
+        }, json={
+            "email": config["login"]["email"],
+            "password": config["login"]["password"]
+        })
+
+        session = resp.json()
+        assert "error" not in session, session["error"]
+
+        with open("session.json", "w", encoding="utf-8") as fw:
+            json.dump({"session": session, "session_created": time.time()}, fw)
+
+    return session
 
 
 if __name__ == "__main__":
