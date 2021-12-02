@@ -34,6 +34,8 @@ async def on_ready():
 
     if not config["mail-channel"]:
         return
+    if not config["login"] or not (config["login"]["email"] or config["login"]["password"]):
+        return
 
     if os.path.exists("mail-acknowledge.json"):
         with open("mail-acknowledge.json", "r", encoding="utf-8") as fr:
