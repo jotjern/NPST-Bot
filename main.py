@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 import requests
 import asyncio
 import discord
@@ -63,12 +65,14 @@ async def on_ready():
                     fname, url = match.groups()
                     attachments.append(url)
 
+                date = datetime.strptime(mail["release_at"], "%Y-%m-%dT%H:%M:%S+00:00") + timedelta(hours=1)
+
                 await mail_channel.send(
-                    f"`Fra: {mail['sender']}`\n" +
-                    f"`Sendt: {mail['release_at']}`\n" +
-                    f"`Til: Alle`\n" +
-                    (f"`CC: {mail['cc']}`\n" if mail['cc'] else '') +
-                    f"`Emne: {mail['topic']}`\n" +
+                    f"```Fra: {mail['sender']}\n" +
+                    f"Sendt: {datetime.strftime(date, '%d %b %H:%M:%S')}\n" +
+                    f"Til: Alle\n" +
+                    (f"CC: {mail['cc']}\n" if mail['cc'] else '') +
+                    f"Emne: {mail['topic']}```" +
                     "```" + mail["content"].replace("{{brukernavn}}", "hjelpere") + "```\n" +
                     "\n".join(attachments)
                 )
