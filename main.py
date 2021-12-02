@@ -32,14 +32,25 @@ async def command_ping(msg: discord.Message, _):
     await msg.channel.send("Pong!")
 
 
-async def command_score(msg: discord.Message, _):
+async def command_score(msg: discord.Message, args):
     resp = requests.get(api_endpoints["scoreboard"], headers={"apikey": config["api_key"]})
+
     if resp.status_code == 200:
         scoreboard = resp.json()
 
-        await msg.channel.send("\n".join([
-            f'{person["username"]}: {person["score"]} poeng' for person in scoreboard[:10]
-        ]))
+        if len(args) == 0:
+            await msg.channel.send("\n".join([
+                f'{person["username"]}: {person["score"]} poeng' for person in scoreboard[:10]
+            ]))
+        else:
+            user_search = args[0]
+            for person in scoreboard:
+                if not person["username"].startswith(user_search):
+                    continue
+                await msg.channel.send(f'{person["username"]}: {person["score"]} poeng')
+                break
+            else:
+                await msg.channel.send(f"Fant ikke den brukeren")
     else:
         await msg.channel.send("Noe gikk galt!")
 
