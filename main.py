@@ -43,13 +43,6 @@ async def command_score(msg: discord.Message, args):
         scoreboard = resp.json()
 
         if len(args) == 0:
-            """
-            embed = discord.Embed()
-            for i, person in enumerate(scoreboard[:5]):
-                embed.add_field(name=f'#{i + 1} {person["username"]}', value=person["score"], inline=False)
-            await msg.channel.send(embed=embed)
-
-            """
             await msg.channel.send(embed=discord.Embed(description="\n\n".join([
                 format_user(person["username"], person["score"], i + 1) for i, person in enumerate(scoreboard[:10])
             ])))
@@ -60,11 +53,6 @@ async def command_score(msg: discord.Message, args):
                 if not person["username"].lower().startswith(user_search.lower()):
                     continue
 
-                """
-                embed = discord.Embed()
-                embed.add_field(name=f'#{i + 1} {person["username"]}', value=person["score"], inline=False)
-                await msg.channel.send(embed=embed)
-                """
                 await msg.channel.send(embed=discord.Embed(
                     description=format_user(person["username"], person["score"], i + 1)
                 ))
