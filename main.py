@@ -109,7 +109,7 @@ async def on_message(msg: discord.Message):
 
 
 def format_user(username, score, placement):
-    return f"#{placement} **{username}**: {score} poeng"
+    return f"#{placement} **{discord.utils.escape_markdown(username)}**: {score} poeng"
 
 
 async def command_ping(msg: discord.Message, _):
