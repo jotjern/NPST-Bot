@@ -80,7 +80,15 @@ async def on_ready():
                 with open("mail-acknowledge.json", "w", encoding="utf-8") as fw:
                     json.dump(mail_acknowledged, fw)
 
-        await asyncio.sleep(config["mail-check-delay"])
+        time_now = datetime.now()
+        next_challenge = datetime(year=time_now.year, month=time_now.month, day=time_now.day, hour=18)
+        seconds_from_new_challenge = (time_now - next_challenge).seconds
+
+        if abs(seconds_from_new_challenge) > 5:
+            await asyncio.sleep(min(config["mail-check-delay"], seconds_from_new_challenge - 5))
+        else:
+            await asyncio.sleep(1)
+            print("FAST SLEEPING")
 
 
 @bot.event
@@ -89,7 +97,6 @@ async def on_message(msg: discord.Message):
         return
 
     command_name, *command_args = msg.content[len(config["prefix"]):].split(" ")
-    print(command_name)
 
     if command_name == "ping":
         await command_ping(msg, command_args)
