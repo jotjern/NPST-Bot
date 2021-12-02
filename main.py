@@ -23,6 +23,8 @@ api_endpoints = {
 mail_acknowledged = []
 mail_channel: Optional[discord.TextChannel] = None
 
+scoreboard_cache = None
+
 bot = discord.Client()
 
 
@@ -137,30 +139,37 @@ async def command_purgemail(msg: discord.Message, _):
 
 
 async def command_score(msg: discord.Message, args):
-    resp = requests.get(api_endpoints["scoreboard"], headers={"apikey": config["api_key"]})
+    global scoreboard_cache
 
-    if resp.status_code == 200:
+    if scoreboard_cache is None or time.time() - scoreboard_cache["time"] > 5:
+        resp = requests.get(api_endpoints["scoreboard"], headers={"apikey": config["api_key"]})
+
+        if resp.status_code != 200:
+            await msg.channel.send("Noe gikk galt!")
+            return
+
         scoreboard = resp.json()
-
-        if len(args) == 0:
-            await msg.channel.send(embed=discord.Embed(description="\n\n".join([
-                format_user(person["username"], person["score"], i + 1) for i, person in enumerate(scoreboard[:10])
-            ])))
-
-        else:
-            user_search = args[0]
-            for i, person in enumerate(scoreboard):
-                if not person["username"].lower().startswith(user_search.lower()):
-                    continue
-
-                await msg.channel.send(embed=discord.Embed(
-                    description=format_user(person["username"], person["score"], i + 1)
-                ))
-                break
-            else:
-                await msg.channel.send(f"Fant ikke den brukeren")
+        scoreboard_cache = {"scoreboard": scoreboard, "time": time.time()}
     else:
-        await msg.channel.send("Noe gikk galt!")
+        scoreboard = scoreboard_cache["scoreboard"]
+
+    if len(args) == 0:
+        await msg.channel.send(embed=discord.Embed(description="\n\n".join([
+            format_user(person["username"], person["score"], i + 1) for i, person in enumerate(scoreboard[:10])
+        ])))
+
+    else:
+        user_search = args[0]
+        for i, person in enumerate(scoreboard):
+            if not person["username"].lower().startswith(user_search.lower()):
+                continue
+
+            await msg.channel.send(embed=discord.Embed(
+                description=format_user(person["username"], person["score"], i + 1)
+            ))
+            break
+        else:
+            await msg.channel.send(f"Fant ikke den brukeren")
 
 
 def get_login_session():
