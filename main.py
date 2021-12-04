@@ -71,7 +71,7 @@ async def on_ready():
 
                 date = datetime.strptime(mail["release_at"], "%Y-%m-%dT%H:%M:%S+00:00") + timedelta(hours=1)
 
-                await mail_channel.send(
+                mail_msg = await mail_channel.send(
                     f"```Fra: {mail['sender']}\n" +
                     f"Sendt: {datetime.strftime(date, '%d %b %H:%M:%S')}\n" +
                     f"Til: Alle\n" +
@@ -80,6 +80,10 @@ async def on_ready():
                     "```" + mail["content"].replace("{{brukernavn}}", "hjelpere") + "```\n" +
                     "\n".join(attachments)
                 )
+
+                # Publish the message to other servers if it's in a news channel
+                if mail_msg.channel.type == discord.ChannelType.news:
+                    await mail_msg.publish()
 
                 with open("mail-acknowledge.json", "w", encoding="utf-8") as fw:
                     json.dump(mail_acknowledged, fw)
