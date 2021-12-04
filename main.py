@@ -122,9 +122,10 @@ async def on_message(msg: discord.Message):
         await msg.channel.send(
             "```" +
             "Kommandoer:\n" +
-            "+topp\n" +
-            "+score\n" +
-            "+score [person]\n" +
+            f"{config['prefix']}topp - sjekk hvor mange som har toppscore\n" +
+            f"{config['prefix']}score - se scoreboard\n" +
+            f"{config['prefix']}score [person] - se score og plassering til en person\n" +
+            f"{config['prefix']}flagg - få dagens flagg\n" +
             "```"
         )
     elif command_name == "flagg":
