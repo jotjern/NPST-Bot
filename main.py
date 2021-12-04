@@ -42,6 +42,9 @@ async def on_ready():
     if os.path.exists("mail-acknowledge.json"):
         with open("mail-acknowledge.json", "r", encoding="utf-8") as fr:
             mail_acknowledged = json.load(fr)
+
+        if not mail_acknowledged:
+            return
     else:
         mail_acknowledged = []
 
@@ -101,6 +104,13 @@ async def on_ready():
 
 @bot.event
 async def on_message(msg: discord.Message):
+    if msg.author.id != bot.user.id and msg.channel.name == "cryptobins":
+        if "https://cryptobin.co/" not in msg.content:
+            await msg.delete()
+            temp_msg = await msg.channel.send("Vennligst kun send cryptobins i denne kanalen!")
+            await asyncio.sleep(5)
+            await temp_msg.delete()
+
     if not msg.content.startswith(config["prefix"]):
         return
 
