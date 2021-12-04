@@ -123,6 +123,8 @@ async def on_message(msg: discord.Message):
             "+score [person]\n" +
             "```"
         )
+    elif command_name == "flagg":
+        await msg.channel.send("PST{finn_det_selv}")
 
 
 def format_user(username, score, placement):
