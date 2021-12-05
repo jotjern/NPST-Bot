@@ -129,7 +129,7 @@ async def on_message(msg: discord.Message):
         await command_topp(msg, command_args)
 
     elif command_name == "hjelp" or command_name == "help":
-        await msg.channel.send(
+        await msg.reply(
             "```" +
             "Kommandoer:\n" +
             f"{config['prefix']}topp - sjekk hvor mange som har toppscore\n" +
@@ -138,8 +138,10 @@ async def on_message(msg: discord.Message):
             f"{config['prefix']}flagg - få dagens flagg\n" +
             "```"
         )
+    elif command_name == "regler" or command_name == "rules":
+        await msg.reply("<#652630206804131902>")
     elif command_name == "flagg":
-        await msg.channel.send("PST{finn_det_selv}")
+        await msg.reply("PST{finn_det_selv}")
 
 
 def format_user(username, score, placement):
@@ -147,7 +149,7 @@ def format_user(username, score, placement):
 
 
 async def command_ping(msg: discord.Message, _):
-    await msg.channel.send("Pong!")
+    await msg.reply("Pong!")
 
 
 async def command_purgemail(msg: discord.Message, _):
@@ -158,7 +160,7 @@ async def command_purgemail(msg: discord.Message, _):
         return
 
     if mail_channel is None:
-        await msg.channel.send("Please wait")
+        await msg.reply("Please wait")
         return
 
     print("Purging mail channel")
@@ -175,7 +177,7 @@ async def command_topp(msg: discord.Message, _):
 
     best_score = max([person["score"] for person in scoreboard])
     n_best_score = len([person for person in scoreboard if person["score"] == best_score])
-    await msg.channel.send(f"Det er {n_best_score} på scoreboardet som har {best_score} poeng")
+    await msg.reply(f"Det er {n_best_score} på scoreboardet som har {best_score} poeng")
 
 
 def get_scoreboard():
@@ -197,7 +199,7 @@ async def command_score(msg: discord.Message, args):
     scoreboard = get_scoreboard()
 
     if len(args) == 0:
-        await msg.channel.send(embed=discord.Embed(description="\n\n".join([
+        await msg.reply(embed=discord.Embed(description="\n\n".join([
             format_user(person["username"], person["score"], i + 1) for i, person in enumerate(scoreboard[:10])
         ])))
 
@@ -207,12 +209,12 @@ async def command_score(msg: discord.Message, args):
             if not person["username"].lower().startswith(user_search.lower()):
                 continue
 
-            await msg.channel.send(embed=discord.Embed(
+            await msg.reply(embed=discord.Embed(
                 description=format_user(person["username"], person["score"], i + 1)
             ))
             break
         else:
-            await msg.channel.send(f"Fant ikke den brukeren")
+            await msg.reply(f"Fant ikke den brukeren")
 
 
 def get_login_session():
