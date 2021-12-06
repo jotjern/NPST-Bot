@@ -128,6 +128,9 @@ async def on_message(msg: discord.Message):
     elif command_name == "topp":
         await command_topp(msg, command_args)
 
+    elif command_name == "alle" or command_name == "all":
+        await command_alle(msg, command_args)
+
     elif command_name == "hjelp" or command_name == "help":
         await msg.reply(
             "```" +
@@ -140,6 +143,7 @@ async def on_message(msg: discord.Message):
         )
     elif command_name == "regler" or command_name == "rules":
         await msg.reply("<#652630206804131902>")
+
     elif command_name == "flagg":
         await msg.reply("PST{finn_det_selv}")
 
@@ -170,6 +174,11 @@ async def command_purgemail(msg: discord.Message, _):
     mail_acknowledged = []
     with open("mail-acknowledge.json", "w", encoding="utf-8") as fw:
         json.dump(mail_acknowledged, fw)
+
+
+async def command_alle(msg: discord.Message, _):
+    scoreboard = get_scoreboard()
+    await msg.reply(f"Det er {len(scoreboard)} brukere på scoreboardet")
 
 
 async def command_topp(msg: discord.Message, _):
