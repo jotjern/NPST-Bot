@@ -136,6 +136,7 @@ async def on_message(msg: discord.Message):
             "```" +
             "Kommandoer:\n" +
             f"{config['prefix']}topp - sjekk hvor mange som har toppscore\n" +
+            f"{config['prefix']}alle - sjekk hvor mange som er på scoreboardet\n" +
             f"{config['prefix']}score - se scoreboard\n" +
             f"{config['prefix']}score [person] - se score og plassering til en person\n" +
             f"{config['prefix']}flagg - få dagens flagg\n" +
