@@ -129,14 +129,14 @@ async def on_message(msg: discord.Message):
         await command_topp(msg, command_args)
 
     elif command_name == "alle" or command_name == "all":
-        await command_alle(msg, command_args)
+        await msg.reply(f"Har slått sammen {config['prefix']}topp og {config['prefix']} til !topp, men her:")
+        await command_topp(msg, command_args)
 
     elif command_name == "hjelp" or command_name == "help":
         await msg.reply(
             "```" +
             "Kommandoer:\n" +
-            f"{config['prefix']}topp - sjekk hvor mange som har toppscore\n" +
-            f"{config['prefix']}alle - sjekk hvor mange som er på scoreboardet\n" +
+            f"{config['prefix']}topp - sjekk hvor mange som har toppscore og hvor mange som er på scoreboardet\n" +
             f"{config['prefix']}score - se scoreboard\n" +
             f"{config['prefix']}score [person] - se score og plassering til en person\n" +
             f"{config['prefix']}flagg - få dagens flagg\n" +
@@ -177,17 +177,12 @@ async def command_purgemail(msg: discord.Message, _):
         json.dump(mail_acknowledged, fw)
 
 
-async def command_alle(msg: discord.Message, _):
-    scoreboard = get_scoreboard()
-    await msg.reply(f"Det er {len(scoreboard)} brukere på scoreboardet")
-
-
 async def command_topp(msg: discord.Message, _):
     scoreboard = get_scoreboard()
 
     best_score = max([person["score"] for person in scoreboard])
     n_best_score = len([person for person in scoreboard if person["score"] == best_score])
-    await msg.reply(f"Det er {n_best_score} på scoreboardet som har {best_score} poeng")
+    await msg.reply(f"{n_best_score} av {len(scoreboard)} på scoreboardet har toppscore på {best_score} poeng")
 
 
 def get_scoreboard():
