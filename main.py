@@ -6,6 +6,7 @@ import discord
 import yaml
 import json
 import time
+import math
 import os
 import re
 
@@ -149,8 +150,17 @@ async def on_message(msg: discord.Message):
         await msg.reply("PST{finn_det_selv}")
 
 
-def format_user(username, score, placement):
-    return f"#{placement} {'👑 ' if placement == 1 else ''}**{discord.utils.escape_markdown(username)}**: {score} poeng"
+def format_user(username, score, n_solves, placement):
+    flags = (score - n_solves) / 9
+    eggs = n_solves - flags
+    if math.floor(score) == score:  # Sanity check
+        flags, eggs = int(flags), int(eggs)
+        return f"#{placement} {'👑 ' if placement == 1 else ''}" +\
+               f"**{discord.utils.escape_markdown(username)}**: {flags * 10} poeng" +\
+               (f" ⭐ x {eggs}" if eggs != 0 else "")
+    else:
+        return f"#{placement} {'👑 ' if placement == 1 else ''}" + \
+               f"**{discord.utils.escape_markdown(username)}**: {score} poeng"
 
 
 async def command_ping(msg: discord.Message, _):
@@ -205,7 +215,7 @@ async def command_score(msg: discord.Message, args):
 
     if len(args) == 0:
         await msg.reply(embed=discord.Embed(description="\n\n".join([
-            format_user(person["username"], person["score"], i + 1) for i, person in enumerate(scoreboard[:10])
+            format_user(person["username"], person["score"], person["num_solves"], i + 1) for i, person in enumerate(scoreboard[:10])
         ])))
 
     else:
@@ -215,7 +225,7 @@ async def command_score(msg: discord.Message, args):
                 continue
 
             await msg.reply(embed=discord.Embed(
-                description=format_user(person["username"], person["score"], i + 1)
+                description=format_user(person["username"], person["score"], person["num_solves"], i + 1)
             ))
             break
         else:
