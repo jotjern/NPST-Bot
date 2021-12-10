@@ -150,6 +150,9 @@ async def on_message(msg: discord.Message):
     elif command_name == "flagg":
         await msg.reply("PST{finn_det_selv}")
 
+    elif command_name == "egg":
+        await msg.reply("https://tenor.com/view/you-win-an-egg-ostrich-egg-egg-giant-egg-massive-egg-gif-15032525")
+
 
 def format_score(score, n_solves):
     flags = (score - n_solves) / 9
