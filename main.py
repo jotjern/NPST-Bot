@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 import requests
 import asyncio
 import discord
+import random
 import yaml
 import json
 import time
@@ -151,7 +152,10 @@ async def on_message(msg: discord.Message):
         await msg.reply("PST{finn_det_selv}")
 
     elif command_name == "egg":
-        await msg.reply("https://tenor.com/view/you-win-an-egg-ostrich-egg-egg-giant-egg-massive-egg-gif-15032525")
+        await msg.reply(random.choice([
+            "https://tenor.com/view/you-win-an-egg-ostrich-egg-egg-giant-egg-massive-egg-gif-15032525",
+            "https://tenor.com/view/egg-frank-can-i-offer-you-a-nice-egg-in-this-trying-time-gif-13802522"
+        ]))
 
 
 def format_score(score, n_solves):
