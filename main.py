@@ -155,15 +155,18 @@ def format_score(score, n_solves):
     flags = (score - n_solves) / 9
     eggs = n_solves - flags
     if math.floor(flags) == flags:  # Sanity check
-        return f"🚩 x {int(flags)}" + (f" ⭐ x {int(eggs)}" if eggs else "")
+        return f"🚩 {int(flags)}" + (f" ⭐ {int(eggs)}" if eggs else "")
     else:
         return f"{score} poeng"
 
 
 def format_user(username, score, n_solves, placement):
-    return f"#{placement} {'👑 ' if placement == 1 else ''}" +\
+    return f"#{placement}{' ' if placement != 10 else ''} {'👑 ' if placement == 1 else ''}" +\
            f"**{discord.utils.escape_markdown(username)}**: {format_score(score, n_solves)}"
 
+
+def pad(string, length):
+    return string + " " * (length - len(string))
 
 async def command_ping(msg: discord.Message, _):
     await msg.reply("Pong!")
@@ -195,7 +198,7 @@ async def command_topp(msg: discord.Message, _):
     best_score_person = max([person for person in scoreboard], key=lambda person: person["score"])
     n_best_score = len([person for person in scoreboard if person["score"] == best_score_person["score"]])
     await msg.reply(
-        f"{n_best_score} av {len(scoreboard)} på scoreboardet har toppscore på " +
+        f"{n_best_score} av {len(scoreboard)} på scoreboardet har " +
         format_score(best_score_person["score"], best_score_person["num_solves"])
     )
 
