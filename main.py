@@ -139,6 +139,7 @@ async def on_message(msg: discord.Message):
             "Kommandoer:\n" +
             f"{config['prefix']}topp - sjekk hvor mange som har toppscore og hvor mange som er på scoreboardet\n" +
             f"{config['prefix']}score - se scoreboard\n" +
+            f"{config['prefix']}score #[plass] - se scoreboard fra en plassering\n" +
             f"{config['prefix']}score [person] - se score og plassering til en person\n" +
             f"{config['prefix']}flagg - få dagens flagg\n" +
             "```"
@@ -150,17 +151,18 @@ async def on_message(msg: discord.Message):
         await msg.reply("PST{finn_det_selv}")
 
 
-def format_user(username, score, n_solves, placement):
+def format_score(score, n_solves):
     flags = (score - n_solves) / 9
     eggs = n_solves - flags
-    if math.floor(score) == score:  # Sanity check
-        flags, eggs = int(flags), int(eggs)
-        return f"#{placement} {'👑 ' if placement == 1 else ''}" +\
-               f"**{discord.utils.escape_markdown(username)}**: {flags * 10} poeng" +\
-               (f" ⭐ x {eggs}" if eggs != 0 else "")
+    if math.floor(flags) == flags:  # Sanity check
+        return f"{int(flags) * 10} poeng" + (f" ⭐ x {int(eggs)}" if eggs else "")
     else:
-        return f"#{placement} {'👑 ' if placement == 1 else ''}" + \
-               f"**{discord.utils.escape_markdown(username)}**: {score} poeng"
+        return f"{score} poeng"
+
+
+def format_user(username, score, n_solves, placement):
+    return f"#{placement} {'👑 ' if placement == 1 else ''}" +\
+           f"**{discord.utils.escape_markdown(username)}**: {format_score(score, n_solves)}"
 
 
 async def command_ping(msg: discord.Message, _):
@@ -190,9 +192,12 @@ async def command_purgemail(msg: discord.Message, _):
 async def command_topp(msg: discord.Message, _):
     scoreboard = get_scoreboard()
 
-    best_score = max([person["score"] for person in scoreboard])
-    n_best_score = len([person for person in scoreboard if person["score"] == best_score])
-    await msg.reply(f"{n_best_score} av {len(scoreboard)} på scoreboardet har toppscore på {best_score} poeng")
+    best_score_person = max([person for person in scoreboard], key=lambda person: person["score"])
+    n_best_score = len([person for person in scoreboard if person["score"] == best_score_person["score"]])
+    await msg.reply(
+        f"{n_best_score} av {len(scoreboard)} på scoreboardet har toppscore på " +
+        format_score(best_score_person["score"], best_score_person["num_solves"])
+    )
 
 
 def get_scoreboard():
@@ -213,11 +218,18 @@ def get_scoreboard():
 async def command_score(msg: discord.Message, args):
     scoreboard = get_scoreboard()
 
-    if len(args) == 0:
+    if len(args) == 0 or args[0].startswith("#"):
+        start = 0
+        if len(args) == 1 and args[0].startswith("#"):
+            try:
+                start = int(args[0][1:]) - 1
+            except ValueError:
+                pass
         await msg.reply(embed=discord.Embed(description="\n\n".join([
-            format_user(person["username"], person["score"], person["num_solves"], i + 1) for i, person in enumerate(scoreboard[:10])
+            format_user(
+                person["username"], person["score"], person["num_solves"], start + i + 1
+            ) for i, person in enumerate(scoreboard[start:start+10])
         ])))
-
     else:
         user_search = args[0]
         for i, person in enumerate(scoreboard):
