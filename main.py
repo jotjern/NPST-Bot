@@ -231,7 +231,7 @@ async def command_score(msg: discord.Message, args):
         if len(scoreboard_segment) == 0:
             await msg.reply("Ingen brukere funnet")
         else:
-            await msg.reply(embed=discord.Embed(description="\n\n".join([
+            await msg.reply(embed=discord.Embed(description="\n".join([
                 format_user(
                     person["username"], person["score"], person["num_solves"], start + i + 1
                 ) for i, person in enumerate(scoreboard_segment)
