@@ -155,7 +155,7 @@ def format_score(score, n_solves):
     flags = (score - n_solves) / 9
     eggs = n_solves - flags
     if math.floor(flags) == flags:  # Sanity check
-        return f"{int(flags) * 10} poeng" + (f" ⭐ x {int(eggs)}" if eggs else "")
+        return f"🚩 x {int(flags)}" + (f" ⭐ x {int(eggs)}" if eggs else "")
     else:
         return f"{score} poeng"
 
