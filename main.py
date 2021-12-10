@@ -225,11 +225,17 @@ async def command_score(msg: discord.Message, args):
                 start = int(args[0][1:]) - 1
             except ValueError:
                 pass
-        await msg.reply(embed=discord.Embed(description="\n\n".join([
-            format_user(
-                person["username"], person["score"], person["num_solves"], start + i + 1
-            ) for i, person in enumerate(scoreboard[start:start+10])
-        ])))
+            else:
+                start = max(start, 0)
+        scoreboard_segment = scoreboard[start:start+10]
+        if len(scoreboard_segment) == 0:
+            await msg.reply("Ingen brukere funnet")
+        else:
+            await msg.reply(embed=discord.Embed(description="\n\n".join([
+                format_user(
+                    person["username"], person["score"], person["num_solves"], start + i + 1
+                ) for i, person in enumerate(scoreboard_segment)
+            ])))
     else:
         user_search = args[0]
         for i, person in enumerate(scoreboard):
