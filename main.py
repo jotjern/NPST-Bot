@@ -169,11 +169,16 @@ def format_score(score, n_solves):
 
 def format_user(username, score, n_solves, placement):
     return f"#{placement}{' ' if placement != 10 else ''} {'👑 ' if placement == 1 else ''}" +\
-           f"**{discord.utils.escape_markdown(username)}**: {format_score(score, n_solves)}"
+           f"**{clean_username(username)}**: {format_score(score, n_solves)}"
+
+
+def clean_username(username):
+    return discord.utils.escape_markdown(username.replace(":crown:", "💩").replace("👑", "💩"))
 
 
 def pad(string, length):
     return string + " " * (length - len(string))
+
 
 async def command_ping(msg: discord.Message, _):
     await msg.reply("Pong!")
