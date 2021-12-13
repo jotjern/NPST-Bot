@@ -118,6 +118,8 @@ async def on_message(msg: discord.Message):
 
     command_name, *command_args = msg.content[len(config["prefix"]):].split(" ")
 
+    command_name = command_name.lower()
+
     if command_name == "ping":
         await command_ping(msg, command_args)
 
