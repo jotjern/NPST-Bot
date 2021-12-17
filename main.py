@@ -160,9 +160,15 @@ async def on_message(msg: discord.Message):
         ]))
 
 
-def format_score(score, n_solves):
+def unpack_score(score, n_solves):
     flags = (score - n_solves) / 9
     eggs = n_solves - flags
+    assert math.floor(flags) == flags
+    return flags, eggs
+
+
+def format_score(score, n_solves):
+    flags, eggs = unpack_score(score, n_solves)
     if math.floor(flags) == flags:  # Sanity check
         return f"🚩 {int(flags)}" + (f" ⭐ {int(eggs)}" if eggs else "")
     else:
@@ -211,10 +217,22 @@ async def command_topp(msg: discord.Message, _):
 
     best_score_person = max([person for person in scoreboard], key=lambda person: person["score"])
     n_best_score = len([person for person in scoreboard if person["score"] == best_score_person["score"]])
-    await msg.reply(
-        f"{n_best_score} av {len(scoreboard)} på scoreboardet har " +
-        format_score(best_score_person["score"], best_score_person["num_solves"])
-    )
+    max_n_flags = unpack_score(best_score_person["score"], best_score_person["num_solves"])[0]
+    n_all_flags = len([
+        person for person in scoreboard if unpack_score(person["score"], person["num_solves"])[0] == max_n_flags
+    ])
+
+    pct_best_score = "{:10.2f}".format(100 * n_best_score / len(scoreboard))
+    pct_all_flags = "{:10.2f}".format(100 * n_all_flags / len(scoreboard))
+
+    await msg.reply(embed=discord.Embed(
+        description=(
+            f"**{n_best_score} av {len(scoreboard)}** ({pct_best_score}%) på scoreboardet har " +
+            format_score(best_score_person["score"], best_score_person["num_solves"]) + "\n" +
+            f"**{n_all_flags} av {len(scoreboard)}** ({pct_all_flags}%) på scoreboardet har " +
+            format_score(max_n_flags * 10, max_n_flags)
+        )
+    ))
 
 
 def get_scoreboard():
