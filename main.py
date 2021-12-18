@@ -298,7 +298,7 @@ async def command_score(msg: discord.Message, args):
                 continue
 
             await msg.reply(embed=discord.Embed(
-                description=format_user(person["username"], person["score"], person["num_solves"], i + 1)
+                description=format_user(person)
             ))
             break
         else:
