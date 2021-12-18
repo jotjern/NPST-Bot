@@ -105,6 +105,16 @@ async def on_ready():
 
 
 @bot.event
+async def on_message_edit(before, after):
+    if after.author.id != bot.user.id and after.channel.name == "cryptobins":
+        if "https://cryptobin.co/" not in after.content:
+            await after.delete()
+            temp_msg = await after.channel.send("Vennligst kun send cryptobins i denne kanalen!")
+            await asyncio.sleep(5)
+            await temp_msg.delete()
+
+
+@bot.event
 async def on_message(msg: discord.Message):
     if msg.author.id != bot.user.id and msg.channel.name == "cryptobins":
         if "https://cryptobin.co/" not in msg.content:
