@@ -160,24 +160,26 @@ async def on_message(msg: discord.Message):
         ]))
 
 
-def unpack_score(score, n_solves):
+def unpack_score(score, n_solves) -> (int, int):
     flags = (score - n_solves) / 9
     eggs = n_solves - flags
     assert math.floor(flags) == flags
-    return flags, eggs
+    return int(flags), int(eggs)
 
 
-def format_score(score, n_solves):
-    flags, eggs = unpack_score(score, n_solves)
-    if math.floor(flags) == flags:  # Sanity check
-        return f"🚩 {int(flags)}" + (f" ⭐ {int(eggs)}" if eggs else "")
-    else:
-        return f"{score} poeng"
+def format_score(person, flags=True, eggs=True):
+    if person["flags"] is None:
+        return f"{person['score']} poeng"
+    return (
+        (f"🚩 {person['flags']} " if person['flags'] and flags else "") +
+        (f"⭐ {person['eggs']}" if person['eggs'] and eggs else "")
+    )
 
 
-def format_user(username, score, n_solves, placement):
+def format_user(person):
+    placement = person["index"] + 1 + 1
     return f"#{placement}{' ' if placement != 10 else ''} {'👑 ' if placement == 1 else ''}" +\
-           f"**{clean_username(username)}**: {format_score(score, n_solves)}"
+           f"**{clean_username(person['username'])}**: {format_score(person)}"
 
 
 def clean_username(username):
@@ -216,21 +218,25 @@ async def command_topp(msg: discord.Message, _):
     scoreboard = get_scoreboard()
 
     best_score_person = max([person for person in scoreboard], key=lambda person: person["score"])
+    most_flags_person = max([person for person in scoreboard], key=lambda person: person["flags"])
+    most_eggs_person = max([person for person in scoreboard], key=lambda person: person["eggs"])
+
     n_best_score = len([person for person in scoreboard if person["score"] == best_score_person["score"]])
-    max_n_flags = unpack_score(best_score_person["score"], best_score_person["num_solves"])[0]
-    n_all_flags = len([
-        person for person in scoreboard if unpack_score(person["score"], person["num_solves"])[0] == max_n_flags
-    ])
+    n_most_flags = len([person for person in scoreboard if person["flags"] == most_flags_person["flags"]])
+    n_most_eggs = len([person for person in scoreboard if person["eggs"] == most_eggs_person["eggs"]])
 
     pct_best_score = "{:10.2f}".format(100 * n_best_score / len(scoreboard))
-    pct_all_flags = "{:10.2f}".format(100 * n_all_flags / len(scoreboard))
+    pct_most_flags = "{:10.2f}".format(100 * n_most_flags / len(scoreboard))
+    pct_most_eggs = "{:10.2f}".format(100 * n_most_eggs / len(scoreboard))
 
     await msg.reply(embed=discord.Embed(
         description=(
             f"**{n_best_score} av {len(scoreboard)}** ({pct_best_score}%) på scoreboardet har " +
-            format_score(best_score_person["score"], best_score_person["num_solves"]) + "\n" +
-            f"**{n_all_flags} av {len(scoreboard)}** ({pct_all_flags}%) på scoreboardet har " +
-            format_score(max_n_flags * 10, max_n_flags)
+            format_score(best_score_person) + "\n" +
+            f"**{n_most_flags} av {len(scoreboard)}** ({pct_most_flags}%) på scoreboardet har " +
+            format_score(most_flags_person, eggs=False) + "\n" +
+            f"**{n_most_eggs} av {len(scoreboard)}** ({pct_most_eggs}%) på scoreboardet har " +
+            format_score(most_eggs_person, flags=False) + "\n"
         )
     ))
 
@@ -244,6 +250,12 @@ def get_scoreboard():
         assert resp.status_code == 200
 
         scoreboard = resp.json()
+        for i, person in enumerate(scoreboard):
+            person["index"] = i
+            try:
+                person["flags"], person["eggs"] = unpack_score(person["score"], person["num_solves"])
+            except AssertionError:
+                person["flags"], person["eggs"] = None, None
         scoreboard_cache = {"scoreboard": scoreboard, "time": time.time()}
     else:
         scoreboard = scoreboard_cache["scoreboard"]
@@ -267,9 +279,7 @@ async def command_score(msg: discord.Message, args):
             await msg.reply("Ingen brukere funnet")
         else:
             await msg.reply(embed=discord.Embed(description="\n".join([
-                format_user(
-                    person["username"], person["score"], person["num_solves"], start + i + 1
-                ) for i, person in enumerate(scoreboard_segment)
+                format_user(person) for i, person in enumerate(scoreboard_segment)
             ])))
     else:
         user_search = args[0]
