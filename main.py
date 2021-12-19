@@ -187,7 +187,7 @@ def format_score(person, flags=True, eggs=True):
 
 
 def format_user(person):
-    placement = person["index"] + 1 + 1
+    placement = person["index"] + 1
     return f"#{placement}{' ' if placement != 10 else ''} {'👑 ' if placement == 1 else ''}" +\
            f"**{clean_username(person['username'])}**: {format_score(person)}"
 
