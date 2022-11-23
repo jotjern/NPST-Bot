@@ -27,7 +27,7 @@ mail_channel: Optional[discord.TextChannel] = None
 
 scoreboard_cache = None
 
-bot = discord.Client()
+bot = discord.Client(intents=discord.Intents.all())
 
 
 @bot.event
@@ -74,7 +74,8 @@ async def on_ready():
                     fname, url = match.groups()
                     attachments.append(url)
 
-                date = datetime.strptime(mail["release_at"], "%Y-%m-%dT%H:%M:%S+00:00") + timedelta(hours=1)
+                date = datetime.strptime(
+                    mail["release_at"], "%Y-%m-%dT%H:%M:%S+00:00") + timedelta(hours=1)
 
                 mail_msg = await mail_channel.send(
                     f"```Fra: {mail['sender']}\n" +
@@ -94,7 +95,8 @@ async def on_ready():
                     json.dump(mail_acknowledged, fw)
 
         time_now = datetime.now()
-        next_challenge = datetime(year=time_now.year, month=time_now.month, day=time_now.day, hour=18)
+        next_challenge = datetime(
+            year=time_now.year, month=time_now.month, day=time_now.day, hour=18)
         seconds_from_new_challenge = (time_now - next_challenge).seconds
 
         if abs(seconds_from_new_challenge) > 5:
@@ -126,7 +128,8 @@ async def on_message(msg: discord.Message):
     if not msg.content.startswith(config["prefix"]):
         return
 
-    command_name, *command_args = msg.content[len(config["prefix"]):].split(" ")
+    command_name, * \
+        command_args = msg.content[len(config["prefix"]):].split(" ")
 
     command_name = command_name.lower()
 
@@ -227,13 +230,19 @@ async def command_purgemail(msg: discord.Message, _):
 async def command_topp(msg: discord.Message, _):
     scoreboard = get_scoreboard()
 
-    best_score_person = max([person for person in scoreboard], key=lambda person: person["score"])
-    most_flags_person = max([person for person in scoreboard], key=lambda person: person["flags"])
-    most_eggs_person = max([person for person in scoreboard], key=lambda person: person["eggs"])
+    best_score_person = max(
+        [person for person in scoreboard], key=lambda person: person["score"])
+    most_flags_person = max(
+        [person for person in scoreboard], key=lambda person: person["flags"])
+    most_eggs_person = max([person for person in scoreboard],
+                           key=lambda person: person["eggs"])
 
-    n_best_score = len([person for person in scoreboard if person["score"] == best_score_person["score"]])
-    n_most_flags = len([person for person in scoreboard if person["flags"] == most_flags_person["flags"]])
-    n_most_eggs = len([person for person in scoreboard if person["eggs"] == most_eggs_person["eggs"]])
+    n_best_score = len(
+        [person for person in scoreboard if person["score"] == best_score_person["score"]])
+    n_most_flags = len(
+        [person for person in scoreboard if person["flags"] == most_flags_person["flags"]])
+    n_most_eggs = len(
+        [person for person in scoreboard if person["eggs"] == most_eggs_person["eggs"]])
 
     pct_best_score = "{:10.2f}".format(100 * n_best_score / len(scoreboard))
     pct_most_flags = "{:10.2f}".format(100 * n_most_flags / len(scoreboard))
@@ -255,7 +264,8 @@ def get_scoreboard():
     global scoreboard_cache
 
     if scoreboard_cache is None or time.time() - scoreboard_cache["time"] > 5:
-        resp = requests.get(api_endpoints["scoreboard"], headers={"apikey": config["api_key"]})
+        resp = requests.get(api_endpoints["scoreboard"], headers={
+                            "apikey": config["api_key"]})
 
         assert resp.status_code == 200
 
@@ -263,7 +273,8 @@ def get_scoreboard():
         for i, person in enumerate(scoreboard):
             person["index"] = i
             try:
-                person["flags"], person["eggs"] = unpack_score(person["score"], person["num_solves"])
+                person["flags"], person["eggs"] = unpack_score(
+                    person["score"], person["num_solves"])
             except AssertionError:
                 person["flags"], person["eggs"] = None, None
         scoreboard_cache = {"scoreboard": scoreboard, "time": time.time()}
