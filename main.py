@@ -156,14 +156,14 @@ class NPSTBot(discord.Client):
                 f"{self.config['prefix']}score #[plass] - se scoreboard fra en plassering\n" +
                 f"{self.config['prefix']}score [person] - se score og plassering til en person\n" +
                 f"{self.config['prefix']}flagg - få dagens flagg\n" +
+                f"{self.config['prefix']}regler - få reglene\n" +
+                f"{self.config['prefix']}ping - sjekk om boten er oppe\n" +
                 "```"
             )
         elif command_name == "regler" or command_name == "rules":
             await msg.reply("<#652630206804131902>")
-
         elif command_name == "flagg":
             await msg.reply("PST{finn_det_selv}")
-
         elif command_name == "egg":
             await msg.reply(random.choice([
                 "https://tenor.com/view/you-win-an-egg-ostrich-egg-egg-giant-egg-massive-egg-gif-15032525",
