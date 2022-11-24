@@ -129,22 +129,24 @@ class NPSTBot(discord.Client):
 
         command_name = command_name.lower()
 
+        try:
+            self.handle_command(msg, command_name, command_args)
+        except Exception as e:
+            msg.reply("`Noe gikk galt 🤖`")
+            raise
+
+    async def handle_command(self, msg: discord.Message, command_name: str, command_args: list):
         if command_name == "ping":
             await self.command_ping(msg, command_args)
-
         elif command_name == "score":
             await self.command_score(msg, command_args)
-
         elif command_name == "purgemail":
             await self.command_purgemail(msg, command_args)
-
         elif command_name == "topp":
             await self.command_topp(msg, command_args)
-
         elif command_name == "alle" or command_name == "all":
             await msg.reply(f"Har slått sammen {self.config['prefix']}topp og {self.config['prefix']} til !topp, men her:")
             await self.command_topp(msg, command_args)
-
         elif command_name == "hjelp" or command_name == "help":
             await msg.reply(
                 "```" +
