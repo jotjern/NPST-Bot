@@ -221,8 +221,6 @@ class NPSTBot(discord.Client):
     async def command_topp(self, msg: discord.Message, _):
         scoreboard = self.get_scoreboard()
 
-        print(scoreboard[:10])
-
         best_score_person = max(
             [person for person in scoreboard], key=lambda person: person["score"] or 0)
         most_flags_person = max(
