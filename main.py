@@ -29,11 +29,12 @@ class NPSTBot(discord.Client):
 
         self.scoreboard_cache = None
         self.mail_channel: Optional[discord.TextChannel] = None
+        self.mod_channel: Optional[discord.TextChannel] = None
         self.mail_acknowledged = []
         super().__init__(*args, **kwargs)
 
     async def on_ready(self):
-        print(f"Bot started as {bot.user}")
+        print(f"Bot started as {self.user}")
 
         if not self.config["mail-channel"]:
             return
@@ -49,7 +50,11 @@ class NPSTBot(discord.Client):
         else:
             self.mail_acknowledged = []
 
-        self.mail_channel = await bot.fetch_channel(self.config["mail-channel"])
+        self.mail_channel = await self.fetch_channel(self.config["mail-channel"]) if self.config.get("mail-channel") else None
+        self.mod_channel = await self.fetch_channel(self.config["moderator-channel"]) if self.config.get("moderator-channel") else None
+
+        if not self.mail_channel:
+            return
 
         while True:
             print("Checking mail")
@@ -110,22 +115,29 @@ class NPSTBot(discord.Client):
             else:
                 await asyncio.sleep(1)
 
-    async def on_message_edit(self, before, after):
-        if after.author.id != bot.user.id and after.channel.name == "cryptobins":
-            if "https://cryptobin.co/" not in after.content:
-                await after.delete()
-                temp_msg = await after.channel.send("Vennligst kun send cryptobins i denne kanalen!")
-                await asyncio.sleep(5)
-                await temp_msg.delete()
-
-    async def on_message(self, msg: discord.Message):
-        if msg.author.id != bot.user.id and msg.channel.name == "cryptobins":
+    async def audit_message(self, msg: discord.Message):
+        if msg.author.id != self.user.id and msg.channel.name == "cryptobins":
             if "https://cryptobin.co/" not in msg.content:
                 await msg.delete()
                 temp_msg = await msg.channel.send("Vennligst kun send cryptobins i denne kanalen!")
                 await asyncio.sleep(5)
                 await temp_msg.delete()
 
+        # Match for CTF flags
+        if re.match(r"N?PST{[^}]{6,}}", msg.content):
+            await msg.delete()
+            temp_msg = await msg.channel.send("Vennligst ikke send flagg!")
+            await asyncio.sleep(5)
+            await temp_msg.delete()
+
+            if self.mod_channel:
+                await self.mod_channel.send(f"Flagg sendt i {msg.channel.mention} av {msg.author.mention}:```{msg.author}: {discord.utils.escape_mentions(msg.content)}```")
+
+    async def on_message_edit(self, before, after):
+        await self.audit_message(after)
+
+    async def on_message(self, msg: discord.Message):
+        await self.audit_message(msg)
         if not msg.content.startswith(self.config["prefix"]):
             return
 
@@ -328,6 +340,10 @@ class NPSTBot(discord.Client):
         super().run(self.config["bot_key"], *args, **kwargs)
 
 
-if __name__ == "__main__":
+def main():
     bot = NPSTBot()
     bot.run()
+
+
+if __name__ == "__main__":
+    main()

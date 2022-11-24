@@ -6,3 +6,4 @@ login:
   password: ""
 mail-channel:
 mail-check-delay:
+moderator-channel:
