@@ -33,8 +33,6 @@ class NPSTBot(discord.Client):
         super().__init__(*args, **kwargs)
 
     async def on_ready(self):
-        global mail_channel, mail_acknowledged
-
         print(f"Bot started as {bot.user}")
 
         if not self.config["mail-channel"]:
@@ -44,14 +42,14 @@ class NPSTBot(discord.Client):
 
         if os.path.exists("mail-acknowledge.json"):
             with open("mail-acknowledge.json", "r", encoding="utf-8") as fr:
-                mail_acknowledged = json.load(fr)
+                self.mail_acknowledged = json.load(fr)
 
-            if not mail_acknowledged:
+            if not self.mail_acknowledged:
                 return
         else:
-            mail_acknowledged = []
+            self.mail_acknowledged = []
 
-        mail_channel = await bot.fetch_channel(self.config["mail-channel"])
+        self.mail_channel = await bot.fetch_channel(self.config["mail-channel"])
 
         while True:
             print("Checking mail")
@@ -65,10 +63,10 @@ class NPSTBot(discord.Client):
                 print(f"Failed to check mail, error code:", resp.status_code)
             else:
                 for mail in resp.json():
-                    if mail["id"] in mail_acknowledged:
+                    if mail["id"] in self.mail_acknowledged:
                         continue
 
-                    mail_acknowledged.append(mail["id"])
+                    self.mail_acknowledged.append(mail["id"])
 
                     attachments = []
                     for match in re.finditer(r"\[(.*)\]\((http[s]?:\/\/.*)\)", mail["content"]):
@@ -87,7 +85,7 @@ class NPSTBot(discord.Client):
                     description = mail["content"].replace(
                         "{{brukernavn}}", "hjelpere")
 
-                    mail_msg = await mail_channel.send(
+                    mail_msg = await self.mail_channel.send(
                         embed=discord.Embed(
                             title=title,
                             description=description,
@@ -100,7 +98,7 @@ class NPSTBot(discord.Client):
                         await mail_msg.publish()
 
                     with open("mail-acknowledge.json", "w", encoding="utf-8") as fw:
-                        json.dump(mail_acknowledged, fw)
+                        json.dump(self.mail_acknowledged, fw)
 
             time_now = datetime.now()
             next_challenge = datetime(
@@ -207,23 +205,21 @@ class NPSTBot(discord.Client):
         await msg.reply("Pong!")
 
     async def command_purgemail(self, msg: discord.Message, _):
-        global mail_acknowledged
-
         if not msg.author.guild_permissions.administrator:
             await msg.add_reaction("❌")
             return
 
-        if mail_channel is None:
+        if self.mail_channel is None:
             await msg.reply("Please wait")
             return
 
         print("Purging mail channel")
 
-        await mail_channel.purge(limit=100)
+        await self.mail_channel.purge(limit=100)
 
-        mail_acknowledged = []
+        self.mail_acknowledged = []
         with open("mail-acknowledge.json", "w", encoding="utf-8") as fw:
-            json.dump(mail_acknowledged, fw)
+            json.dump(self.mail_acknowledged, fw)
 
     async def command_topp(self, msg: discord.Message, _):
         scoreboard = self.get_scoreboard()
