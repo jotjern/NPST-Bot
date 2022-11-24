@@ -78,14 +78,21 @@ class NPSTBot(discord.Client):
                     date = datetime.strptime(
                         mail["release_at"], "%Y-%m-%dT%H:%M:%S+00:00") + timedelta(hours=1)
 
+                    title = (f"Fra: {mail['sender']}\n" +
+                             f"Sendt: {datetime.strftime(date, '%d %b %H:%M:%S')}\n" +
+                             f"Til: Alle\n" +
+                             (f"CC: {mail['cc']}\n" if mail['cc'] else '') +
+                             f"Emne: {mail['topic']}")
+
+                    description = mail["content"].replace(
+                        "{{brukernavn}}", "hjelpere")
+
                     mail_msg = await mail_channel.send(
-                        f"```Fra: {mail['sender']}\n" +
-                        f"Sendt: {datetime.strftime(date, '%d %b %H:%M:%S')}\n" +
-                        f"Til: Alle\n" +
-                        (f"CC: {mail['cc']}\n" if mail['cc'] else '') +
-                        f"Emne: {mail['topic']}```" +
-                        "```" + mail["content"].replace("{{brukernavn}}", "hjelpere") + "```\n" +
-                        "\n".join(attachments)
+                        embed=discord.Embed(
+                            title=title,
+                            description=description,
+                            color=0xff0000
+                        )
                     )
 
                     # Publish the message to other servers if it's in a news channel
