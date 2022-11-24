@@ -130,7 +130,7 @@ class NPSTBot(discord.Client):
         command_name = command_name.lower()
 
         try:
-            self.handle_command(msg, command_name, command_args)
+            await self.handle_command(msg, command_name, command_args)
         except Exception as e:
             msg.reply("`Noe gikk galt 🤖`")
             raise
