@@ -277,34 +277,22 @@ class NPSTBot(discord.Client):
     async def command_score(self, msg: discord.Message, args):
         scoreboard = self.get_scoreboard()
 
-        if len(args) == 0 or args[0].startswith("#"):
-            start = 0
-            if len(args) == 1 and args[0].startswith("#"):
+        if len(args) >= 1:
+            if args[0].startswith("#") or args[0].startswith("*"):
                 try:
-                    start = int(args[0][1:]) - 1
+                    scoreboard = scoreboard[max(int(args[0][1:]) - 1, 0):]
                 except ValueError:
                     pass
-                else:
-                    start = max(start, 0)
-            scoreboard_segment = scoreboard[start:start+10]
-            if len(scoreboard_segment) == 0:
-                await msg.reply("Ingen brukere funnet")
             else:
-                await msg.reply(embed=discord.Embed(description="\n".join([
-                    self.format_user(person) for i, person in enumerate(scoreboard_segment)
-                ])))
-        else:
-            user_search = args[0]
-            for i, person in enumerate(scoreboard):
-                if not person["username"].lower().startswith(user_search.lower()):
-                    continue
+                scoreboard = [person for person in scoreboard if person["username"].lower(
+                ).startswith(args[0].lower())]
 
-                await msg.reply(embed=discord.Embed(
-                    description=self.format_user(person)
-                ))
-                break
-            else:
-                await msg.reply(f"Fant ikke den brukeren")
+        if len(scoreboard) == 0:
+            await msg.reply("Ingen brukere funnet")
+        else:
+            await msg.reply(embed=discord.Embed(description="\n".join([
+                self.format_user(person) for i, person in enumerate(scoreboard[:10])
+            ])))
 
     def get_login_session(self):
         session = None
