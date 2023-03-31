@@ -149,7 +149,7 @@ class NPSTBot(discord.Client):
         try:
             await self.handle_command(msg, command_name, command_args)
         except Exception as e:
-            msg.reply("`Noe gikk galt 🤖`")
+            await msg.reply("`Noe gikk galt 🤖`")
             raise
 
     async def handle_command(self, msg: discord.Message, command_name: str, command_args: list):
