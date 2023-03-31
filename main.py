@@ -17,7 +17,8 @@ from typing import Optional, Tuple
 class NPSTBot(discord.Client):
     api_endpoints = {
         "scoreboard": "https://wiarnvnpsjysgqbwigrn.supabase.co/rest/v1/scoreboard?select=*",
-        "snabel-a": "https://wiarnvnpsjysgqbwigrn.supabase.co/rest/v1/messages?select=id%2Crelease_at%2Csender%2Crecipient%2Ccc%2Ctopic%2Ccontent%2Crelease_after_solve%28flag%29"
+        "snabel-a": "https://wiarnvnpsjysgqbwigrn.supabase.co/rest/v1/messages?select="
+                    "id%2Crelease_at%2Csender%2Crecipient%2Ccc%2Ctopic%2Ccontent%2Crelease_after_solve%28flag%29"
     }
 
     def __init__(self, *args, config_file="config.yaml", **kwargs):
@@ -50,8 +51,10 @@ class NPSTBot(discord.Client):
         else:
             self.mail_acknowledged = []
 
-        self.mail_channel = await self.fetch_channel(self.config["mail-channel"]) if self.config.get("mail-channel") else None
-        self.mod_channel = await self.fetch_channel(self.config["moderator-channel"]) if self.config.get("moderator-channel") else None
+        self.mail_channel = await self.fetch_channel(self.config["mail-channel"])\
+            if self.config.get("mail-channel") else None
+        self.mod_channel = await self.fetch_channel(self.config["moderator-channel"])\
+            if self.config.get("moderator-channel") else None
 
         if not self.mail_channel:
             return
@@ -74,7 +77,7 @@ class NPSTBot(discord.Client):
                     self.mail_acknowledged.append(mail["id"])
 
                     attachments = []
-                    for match in re.finditer(r"\[(.*)\]\((http[s]?:\/\/.*)\)", mail["content"]):
+                    for match in re.finditer(r"\[(.*)]\((https?://.*)\)", mail["content"]):
                         fname, url = match.groups()
                         attachments.append(url)
 
@@ -131,9 +134,11 @@ class NPSTBot(discord.Client):
             await temp_msg.delete()
 
             if self.mod_channel:
-                await self.mod_channel.send(f"Flagg sendt i {msg.channel.mention} av {msg.author.mention}:```{msg.author}: {discord.utils.escape_mentions(msg.content)}```")
+                await self.mod_channel.send(
+                    f"Flagg sendt i {msg.channel.mention} av {msg.author.mention}:"
+                    f"```{msg.author}: {discord.utils.escape_mentions(msg.content)}```")
 
-    async def on_message_edit(self, before, after):
+    async def on_message_edit(self, _before, after):
         await self.audit_message(after)
 
     async def on_message(self, msg: discord.Message):
@@ -148,7 +153,7 @@ class NPSTBot(discord.Client):
 
         try:
             await self.handle_command(msg, command_name, command_args)
-        except Exception as e:
+        except Exception as _:
             await msg.reply("`Noe gikk galt 🤖`")
             raise
 
@@ -161,20 +166,19 @@ class NPSTBot(discord.Client):
             await self.command_purgemail(msg, command_args)
         elif command_name == "topp":
             await self.command_topp(msg, command_args)
-        elif command_name == "alle" or command_name == "all":
-            await msg.reply(f"Har slått sammen {self.config['prefix']}topp og {self.config['prefix']} til !topp, men her:")
-            await self.command_topp(msg, command_args)
         elif command_name == "hjelp" or command_name == "help":
+            prefix = self.config["prefix"]
+
             await msg.reply(
                 "```" +
                 "Kommandoer:\n" +
-                f"{self.config['prefix']}topp - sjekk hvor mange som har toppscore og hvor mange som er på scoreboardet\n" +
-                f"{self.config['prefix']}score - se scoreboard\n" +
-                f"{self.config['prefix']}score #[plass] - se scoreboard fra en plassering\n" +
-                f"{self.config['prefix']}score [person] - se score og plassering til en person\n" +
-                f"{self.config['prefix']}flagg - få dagens flagg\n" +
-                f"{self.config['prefix']}regler - få reglene\n" +
-                f"{self.config['prefix']}ping - sjekk om boten er oppe\n" +
+                f"{prefix}topp - sjekk hvor mange som har toppscore og hvor mange som er på scoreboardet\n" +
+                f"{prefix}score - se scoreboard\n" +
+                f"{prefix}score #[plass] - se scoreboard fra en plassering\n" +
+                f"{prefix}score [person] - se score og plassering til en person\n" +
+                f"{prefix}flagg - få dagens flagg\n" +
+                f"{prefix}regler - få reglene\n" +
+                f"{prefix}ping - sjekk om boten er oppe\n" +
                 "```"
             )
         elif command_name == "regler" or command_name == "rules":
@@ -213,7 +217,8 @@ class NPSTBot(discord.Client):
     def clean_username(username):
         return discord.utils.escape_markdown(username.replace(":crown:", "💩").replace("👑", "💩"))
 
-    async def command_ping(self, msg: discord.Message, _):
+    @staticmethod
+    async def command_ping(msg: discord.Message, _):
         await msg.reply("Pong!")
 
     async def command_purgemail(self, msg: discord.Message, _):
@@ -257,12 +262,18 @@ class NPSTBot(discord.Client):
         pct_most_eggs = "{:10.2f}".format(100 * n_most_eggs / len(scoreboard))
 
         await msg.reply(embed=discord.Embed(
-            description=("\n".join(set((f"**{n_best_score} av {len(scoreboard)}** ({pct_best_score}%) på scoreboardet har " +
-                                        self.format_score(best_score_person) + "\n" +
-                                        f"**{n_most_flags} av {len(scoreboard)}** ({pct_most_flags}%) på scoreboardet har " +
-                                        self.format_score(most_flags_person, eggs=False) + "\n" +
-                                        f"**{n_most_eggs} av {len(scoreboard)}** ({pct_most_eggs}%) på scoreboardet har " +
-                                        self.format_score(most_eggs_person, flags=False)).split("\n"))))
+            description=(
+                "\n".join(set(
+                    (
+                        f"**{n_best_score} av {len(scoreboard)}** ({pct_best_score}%) på scoreboardet har " +
+                        self.format_score(best_score_person) + "\n" +
+                        f"**{n_most_flags} av {len(scoreboard)}** ({pct_most_flags}%) på scoreboardet har " +
+                        self.format_score(most_flags_person, eggs=False) + "\n" +
+                        f"**{n_most_eggs} av {len(scoreboard)}** ({pct_most_eggs}%) på scoreboardet har " +
+                        self.format_score(most_eggs_person, flags=False)).split("\n")
+                    )
+                )
+            )
         ))
 
     def get_scoreboard(self):
