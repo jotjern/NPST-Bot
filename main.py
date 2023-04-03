@@ -79,7 +79,7 @@ class NPSTBot(discord.Client):
                         attachments.append(url)
 
                     date = datetime.strptime(
-                        mail["release_at"], "%Y-%m-%dT%H:%M:%S+00:00") + timedelta(hours=1)
+                        mail["release_at"], "%Y-%m-%dT%H:%M:%S+00:00") + timedelta(hours=2)
 
                     title = (f"Fra: {mail['sender']}\n" +
                              f"Sendt: {datetime.strftime(date, '%d %b %H:%M:%S')}\n" +
@@ -124,7 +124,7 @@ class NPSTBot(discord.Client):
                 await temp_msg.delete()
 
         # Match for CTF flags
-        if re.match(r"N?PST{[^}]{6,}}", msg.content):
+        if re.match(r"[Nn]?[Pp][Ss][Tt]{[^}]{6,}}", msg.content):
             await msg.delete()
             temp_msg = await msg.channel.send("Vennligst ikke send flagg!")
             await asyncio.sleep(5)
