@@ -147,9 +147,13 @@ class NPSTBot(discord.Client):
 
     async def on_message_edit(self, _before, after):
         await self.audit_message(after)
+        await self.handle_potential_command(msg)
 
     async def on_message(self, msg: discord.Message):
         await self.audit_message(msg)
+        await self.handle_potential_command(msg)
+
+    async def handle_potential_command(msg: discord.Message):
         if not msg.content.startswith(self.config.get("prefix", "!")):
             return
 
