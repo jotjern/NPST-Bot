@@ -121,7 +121,12 @@ class NPSTBot(discord.Client):
     async def audit_message(self, msg: discord.Message):
         if not self.config.get("moderate", False):
             return
-        if msg.author.id != self.user.id and msg.channel.name == "cryptobins":
+        if isinstance(msg.channel, discord.DMChannel):
+            return
+        if msg.author.id == self.user.id:
+            return
+
+        if msg.channel.name == "cryptobins":
             if "https://cryptobin.co/" not in msg.content:
                 await msg.delete()
                 temp_msg = await msg.channel.send("Vennligst kun send cryptobins i denne kanalen!")
