@@ -7,3 +7,4 @@ login:
 mail-channel:
 mail-check-delay:
 moderator-channel:
+moderate: false
