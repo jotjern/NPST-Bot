@@ -119,6 +119,8 @@ class NPSTBot(discord.Client):
                 await asyncio.sleep(1)
 
     async def audit_message(self, msg: discord.Message):
+        if not self.config.get("moderate", False):
+            return
         if msg.author.id != self.user.id and msg.channel.name == "cryptobins":
             if "https://cryptobin.co/" not in msg.content:
                 await msg.delete()
