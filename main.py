@@ -37,9 +37,9 @@ class NPSTBot(discord.Client):
     async def on_ready(self):
         print(f"Bot started as {self.user}")
 
-        if not self.config["mail-channel"]:
+        if not self.config.get("mail-channel"):
             return
-        if not self.config["login"] or not (self.config["login"]["email"] or self.config["login"]["password"]):
+        if not self.config.get("login") or not (self.config["login"].get("email") or self.config["login"].get("password")):
             return
 
         if os.path.exists("mail-acknowledge.json"):
@@ -114,7 +114,7 @@ class NPSTBot(discord.Client):
             seconds_from_new_challenge = (time_now - next_challenge).seconds
 
             if abs(seconds_from_new_challenge) > 5:
-                await asyncio.sleep(min(self.config["mail-check-delay"], seconds_from_new_challenge - 5))
+                await asyncio.sleep(min(self.config.get("mail-check-delay", 60), seconds_from_new_challenge - 5))
             else:
                 await asyncio.sleep(1)
 
@@ -145,11 +145,11 @@ class NPSTBot(discord.Client):
 
     async def on_message(self, msg: discord.Message):
         await self.audit_message(msg)
-        if not msg.content.startswith(self.config["prefix"]):
+        if not msg.content.startswith(self.config.get("prefix", "!")):
             return
 
         command_name, * \
-            command_args = msg.content[len(self.config["prefix"]):].split(" ")
+            command_args = msg.content[len(self.config.get("prefix", "!")):].split(" ")
 
         command_name = command_name.lower()
 
@@ -169,7 +169,7 @@ class NPSTBot(discord.Client):
         elif command_name == "topp":
             await self.command_topp(msg, command_args)
         elif command_name == "hjelp" or command_name == "help":
-            prefix = self.config["prefix"]
+            prefix = self.config.get("prefix", "!")
 
             await msg.reply(
                 "```" +
