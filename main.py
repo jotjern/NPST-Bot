@@ -119,6 +119,7 @@ class NPSTBot(discord.Client):
                 await asyncio.sleep(1)
 
     async def audit_message(self, msg: discord.Message):
+        print("Auditing:", msg)
         if not self.config.get("moderate", False):
             return
         if isinstance(msg.channel, discord.DMChannel):
@@ -134,7 +135,7 @@ class NPSTBot(discord.Client):
                 await temp_msg.delete()
 
         # Match for CTF flags
-        if re.match(r"([Nn]?[Pp][Ss][Tt])|([Ee][Gg][Gg]){[^}]{6,}}", msg.content):
+        if re.match(r"(([Nn]?[Pp][Ss][Tt])|([Ee][Gg][Gg])){[^}]{6,}}", msg.content):
             await msg.delete()
             temp_msg = await msg.channel.send("Vennligst ikke send flagg!")
             await asyncio.sleep(5)
@@ -147,7 +148,7 @@ class NPSTBot(discord.Client):
 
     async def on_message_edit(self, _before, after):
         await self.audit_message(after)
-        await self.handle_potential_command(msg)
+        await self.handle_potential_command(after)
 
     async def on_message(self, msg: discord.Message):
         await self.audit_message(msg)
