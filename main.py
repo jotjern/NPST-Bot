@@ -37,9 +37,9 @@ class NPSTBot(discord.Client):
     async def on_ready(self):
         print(f"Bot started as {self.user}")
 
-        if not self.config["mail-channel"]:
+        if not self.config.get("mail-channel"):
             return
-        if not self.config["login"] or not (self.config["login"]["email"] or self.config["login"]["password"]):
+        if not self.config.get("login") or not (self.config["login"].get("email") or self.config["login"].get("password")):
             return
 
         if os.path.exists("mail-acknowledge.json"):
@@ -82,7 +82,7 @@ class NPSTBot(discord.Client):
                         attachments.append(url)
 
                     date = datetime.strptime(
-                        mail["release_at"], "%Y-%m-%dT%H:%M:%S+00:00") + timedelta(hours=1)
+                        mail["release_at"], "%Y-%m-%dT%H:%M:%S+00:00") + timedelta(hours=2)
 
                     title = (f"Fra: {mail['sender']}\n" +
                              f"Sendt: {datetime.strftime(date, '%d %b %H:%M:%S')}\n" +
@@ -114,12 +114,19 @@ class NPSTBot(discord.Client):
             seconds_from_new_challenge = (time_now - next_challenge).seconds
 
             if abs(seconds_from_new_challenge) > 5:
-                await asyncio.sleep(min(self.config["mail-check-delay"], seconds_from_new_challenge - 5))
+                await asyncio.sleep(min(self.config.get("mail-check-delay", 60), seconds_from_new_challenge - 5))
             else:
                 await asyncio.sleep(1)
 
     async def audit_message(self, msg: discord.Message):
-        if msg.author.id != self.user.id and msg.channel.name == "cryptobins":
+        if not self.config.get("moderate", False):
+            return
+        if isinstance(msg.channel, discord.DMChannel):
+            return
+        if msg.author.id == self.user.id:
+            return
+
+        if msg.channel.name == "cryptobins":
             if "https://cryptobin.co/" not in msg.content:
                 await msg.delete()
                 temp_msg = await msg.channel.send("Vennligst kun send cryptobins i denne kanalen!")
@@ -127,7 +134,7 @@ class NPSTBot(discord.Client):
                 await temp_msg.delete()
 
         # Match for CTF flags
-        if re.match(r"N?PST{[^}]{6,}}", msg.content):
+        if re.match(r"([Nn]?[Pp][Ss][Tt])|([Ee][Gg][Gg]){[^}]{6,}}", msg.content):
             await msg.delete()
             temp_msg = await msg.channel.send("Vennligst ikke send flagg!")
             await asyncio.sleep(5)
@@ -140,14 +147,18 @@ class NPSTBot(discord.Client):
 
     async def on_message_edit(self, _before, after):
         await self.audit_message(after)
+        await self.handle_potential_command(msg)
 
     async def on_message(self, msg: discord.Message):
         await self.audit_message(msg)
-        if not msg.content.startswith(self.config["prefix"]):
+        await self.handle_potential_command(msg)
+
+    async def handle_potential_command(self, msg: discord.Message):
+        if not msg.content.startswith(self.config.get("prefix", "!")):
             return
 
         command_name, * \
-            command_args = msg.content[len(self.config["prefix"]):].split(" ")
+            command_args = msg.content[len(self.config.get("prefix", "!")):].split(" ")
 
         command_name = command_name.lower()
 
@@ -167,7 +178,7 @@ class NPSTBot(discord.Client):
         elif command_name == "topp":
             await self.command_topp(msg, command_args)
         elif command_name == "hjelp" or command_name == "help":
-            prefix = self.config["prefix"]
+            prefix = self.config.get("prefix", "!")
 
             await msg.reply(
                 "```" +
