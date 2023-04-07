@@ -298,15 +298,11 @@ class NPSTBot(discord.Client):
             scoreboard = resp.json()
             for i, person in enumerate(scoreboard):
                 person["index"] = i
-                person["flags"], person["eggs"] = None, None
-
-                """
                 try:
                     person["flags"], person["eggs"] = self.unpack_score(
                         person["score"], person["num_solves"])
                 except AssertionError:
                     person["flags"], person["eggs"] = None, None
-                """
             self.scoreboard_cache = {
                 "scoreboard": scoreboard, "time": time.time()}
         else:
