@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from bs4 import BeautifulSoup
 
 import requests
 import asyncio
@@ -12,6 +13,18 @@ import os
 import re
 
 from typing import Optional, Tuple
+from functools import lru_cache
+
+
+@lru_cache(maxsize=512)
+def is_locked_pastebin(url):
+    resp = requests.get(url)
+    if resp.status_code != 200:
+        return False
+    soup = BeautifulSoup(resp.text, "html.parser")
+    title_elem = soup.find("title")
+    title = title_elem.text.strip() if title_elem else ""
+    return title == "Pastebin.com - Locked Paste"
 
 
 class NPSTBot(discord.Client):
@@ -127,10 +140,30 @@ class NPSTBot(discord.Client):
         if msg.author.id == self.user.id:
             return
 
-        if msg.channel.name == "cryptobins":
-            if "https://cryptobin.co/" not in msg.content:
+        if msg.channel.name == "cryptobins" or msg.channel.name == "løsninger":
+            passed_checks = True
+
+            all_urls = re.findall(
+                r"(https?://[^\s]+)", msg.content)
+
+            if len(all_urls) == 0:
+                passed_checks = False
+            
+            for url in all_urls:
+                if url.startswith("https://cryptobin.co"):
+                    continue
+                elif url.startswith("https://pastebin.com"):
+                    if not is_locked_pastebin(url):
+                        passed_checks = False
+                        break
+                    continue
+                else:
+                    passed_checks = False
+                    break
+
+            if not passed_checks:
                 await msg.delete()
-                temp_msg = await msg.channel.send("Vennligst kun send cryptobins i denne kanalen!")
+                temp_msg = await msg.channel.send("Vennligst kun send cryptobins eller låste pastebins i denne kanalen!")
                 await asyncio.sleep(5)
                 await temp_msg.delete()
 
