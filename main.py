@@ -132,9 +132,9 @@ class NPSTBot(discord.Client):
                 await asyncio.sleep(1)
 
     async def audit_message(self, msg: discord.Message):
-        print("Auditing:", msg)
         if not self.config.get("moderate", False):
             return
+        print("Auditing:", msg)
         if isinstance(msg.channel, discord.DMChannel):
             return
         if msg.author.id == self.user.id:
@@ -160,6 +160,8 @@ class NPSTBot(discord.Client):
                 else:
                     passed_checks = False
                     break
+
+            print(f"{passed_checks=}")
 
             if not passed_checks:
                 await msg.delete()
