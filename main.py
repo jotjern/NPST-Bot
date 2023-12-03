@@ -170,7 +170,7 @@ class NPSTBot(discord.Client):
                 await temp_msg.delete()
 
         # Match for CTF flags
-        if re.match(r"(([Nn]?[Pp][Ss][Tt])|([Ee][Gg][Gg])){[^}]{6,}}", msg.content):
+        if re.match(r"((N?PST)|(EGG)|(NSM)|(KRIPOS)){[^}]{6,}}", msg.content, re.IGNORECASE):
             await msg.delete()
             temp_msg = await msg.channel.send("Vennligst ikke send flagg!")
             await asyncio.sleep(5)
